@@ -1,5 +1,16 @@
 #include "FL.h"
 
+void printFeatureMatrixWithName(FeatureMatrix *m, int nFeatures, int numberPatchsPerImage, DirectoryManager* directoryManager) {
+	for(int i=0; i<nFeatures; i++) {
+		printf("[%d]: {", i);
+		for(int j=0; j<m->featureVector[0]->size; j++) {
+			printf(" %f", m->featureVector[i]->features[j]);
+		}
+		printf(" } ");
+		printf("%s\n",directoryManager->files[i/numberPatchsPerImage]->path);
+	}
+}
+
 void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
 	for(int i=0; i<nFeatures; i++) {
 		printf("[%d]: {", i);
@@ -9,7 +20,6 @@ void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
 		printf(" }\n");
 	}
 }
-
 int main(int argc, char **argv) {
 	
     if (argc != 6){
@@ -39,14 +49,14 @@ int main(int argc, char **argv) {
 	destroyFeatureVector(&hist);
 
     FeatureMatrix* features = computeFeatureVectors(directoryManager, patchSize, binSize);
-	//printf("Features\n");
-	//printFeatureMatrix(features, numberPatchs);
+	printf("Features\n");
+	printFeatureMatrixWithName(features, numberPatchs, numberPatchsPerImage, directoryManager);
 
 	int k = ceil(numberPatchs*0.1);	
-	
+
 	FeatureMatrix *dictionary = computekMeans(features, k, numberPatchs, maxIterations);
-	//printf("Dictionary\n");	
-	//printFeatureMatrix(dictionary, k);
+	printf("Dictionary\n");	
+	printFeatureMatrix(dictionary, k);
 
     destroyDirectoryManager(&directoryManager);
 	destroyFeatureMatrix(&features);

@@ -1,6 +1,6 @@
 #include "FL.h"
 
-
+/*
 char* mysubstr(char *str, int position, int length) {
 	char *result = (char*)calloc(length+1, sizeof(char)); 
 	int index = 0;
@@ -29,11 +29,22 @@ int imageLabel(char *filename) {
 
 	return prev_l;
 }
+*/
+
+void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
+	for(int i=0; i<nFeatures; i++) {
+		printf("[%d]: {", i);
+		for(int j=0; j<m->featureVector[0]->size; j++) {
+			printf(" %f", m->featureVector[i]->features[j]);
+		}
+		printf(" }\n");
+	}
+}
 
 int main(int argc, char **argv) {
 	
-    if (argc != 6){
-        printf("Usage:\n<directory path [such as ../data/]>\n<dictionary file path [such as ../files/dic.txt]>\n<patchSize [such as 8]>\n<binSize [such as 64]>\n<matriz file path [such as ../files/matriz.txt]>\n");
+    if (argc != 8){
+        printf("Usage:\n<directory path [such as ../data/]>\n<dictionary file path [such as ../files/dic.txt]>\n<patchSize [such as 8]>\n<binSize [such as 64]>\n<classifier file path [such as ../files/classifier.txt]>\nn class\nmaxIterations");
         exit(-1);
     }
 
@@ -42,7 +53,9 @@ int main(int argc, char **argv) {
 	char *filename = argv[2];
 	int patchSize = atoi(argv[3]);
 	int binSize = atoi(argv[4]);
-	char *filenameMatriz = argv[5];
+	char *filenameClassifier = argv[5];
+	int k = atoi(argv[6]);
+	int maxIterations = atoi(argv[7]);
 
 	Image* firstImage = readImage(directoryManager->files[0]->path);
     int patchX_axis = firstImage->nx/patchSize;
@@ -65,41 +78,46 @@ int main(int argc, char **argv) {
 	//Verificando quantidade de palavras no dicionario
 	char str[999];
 	FILE * file = fopen(filename , "r");
+	size_t len = 0;
+	char *line = NULL;
+	int nread;
 	if (file) {
-		
-		while (fscanf(file, "%s", str)!=EOF) {
-			dictionarySize++;
+		while ((nread = getline(&line, &len, file)) != -1) {
+			dictionarySize++;			
 		}
 		fclose(file);
 	}
-	
+	printf("\tdictionarySize=%d\n", dictionarySize);
+
+
 	FeatureMatrix *dictionary = createFeatureMatrix(dictionarySize);
 	// Lendo arquivo para salvar dicionario em estrutura FeatureMatrix
 	file = fopen(filename , "r");
 	if (file) {
+
+		for(int i=0; i<dictionarySize; i++) {
+			dictionary->featureVector[i] = createFeatureVector(nFeatures);
+		}
 		int indexLine = 0;
+		int indexFeature = 0;
 		while (fscanf(file, "%s", str)!=EOF) {
-			dictionary->featureVector[indexLine] = createFeatureVector(nFeatures);
-			char * pch;
-			pch = strtok (str," ");
-			int indexFeature = 0;
-			while (pch != NULL) {
-				dictionary->featureVector[indexLine]->features[indexFeature] = atof(pch);
-				pch = strtok (NULL, " ");
+			dictionary->featureVector[indexLine]->features[indexFeature] = atof(str);
+			if(indexFeature == (nFeatures-1)) {
+				indexLine++;		
+				indexFeature = 0;		
+			} else {
 				indexFeature++;
 			}
-			indexLine++;
 		}
 		fclose(file);
 	}
 
-	
     printf("reading directory:\n");
 
 	float dist, minDist;
 	int indexWord;
 
-	int *labels = (int*) malloc(sizeof(int)*nFiles);
+	//int *labels = (int*) malloc(sizeof(int)*nFiles);
 	FeatureMatrix *matrix = createFeatureMatrix(nFiles);
 
     for (int i = 0; i < nFiles; ++i) {
@@ -128,7 +146,7 @@ int main(int argc, char **argv) {
 			histogram->features[indexWord]++;
 		}
 
-		labels[i] = imageLabel(directoryManager->files[i]->path);
+		//labels[i] = imageLabel(directoryManager->files[i]->path);
 		matrix->featureVector[i] = copyFeatureVector(histogram);
 		
 		destroyFeatureVector(&histogram);
@@ -136,10 +154,18 @@ int main(int argc, char **argv) {
 		destroyFeatureMatrix(&featuresCurrentImage);
     }
 	writeFeatureMatrix(matrix, filenameMatriz, nFiles);
+	
 
+	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations);
+
+	writeFeatureMatrix(classifier, filenameClassifier, nFiles);
+	printFeatureMatrix(classifier, k);
+	
+	
 	destroyFeatureMatrix(&matrix);
     destroyDirectoryManager(&directoryManager);
 	destroyFeatureMatrix(&dictionary);
+	destroyFeatureMatrix(&classifier);
 
     return 0;
 }
