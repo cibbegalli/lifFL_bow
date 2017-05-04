@@ -71,7 +71,7 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 			}
 		}
 
-		
+		//Old_centroids = centroids; centroids e elements zerados
 		for(int i=0; i<k; i++){
 			elements[i]=0;
 			destroyFeatureVector(&old_centroids->featureVector[i]);
@@ -82,10 +82,10 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 		
 		//Atualiza centroides
 		for(int i=0; i<nFeaturesVectors; i++){
-			for(int j=0; j<histogram->featureVector[0]->size; j++){
+			for(int j=0; j<histogram->featureVector[0]->size; j++){//Soma de todos os pontos de cada cluster
 				centroids->featureVector[clusters[i]]->features[j] += histogram->featureVector[i]->features[j];		
 			}
-			elements[clusters[i]]++;
+			elements[clusters[i]]++; //Quantidade de elementos em cada cluster
 		}
 		
 		for(int i=0; i<nFeaturesVectors; i++) {
@@ -97,7 +97,21 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 			//centroids->featureVector[i]->features[j] = centroids->featureVector[i]->features[j]/(elements[i]+1);
 			if(elements[i] != 0) {
 				for(int j=0; j<histogram->featureVector[0]->size; j++)
-					centroids->featureVector[i]->features[j] = centroids->featureVector[i]->features[j]/elements[i];
+					centroids->featureVector[i]->features[j] = centroids->featureVector[i]->features[j]/elements[i]; //Tira ponto médio em cada cluster.
+    
+                for(int i=0; i<nFeaturesVectors; i++){ //Para cada cluster, calcular o elemento mais próximo da média
+                    dist = 0;
+                    min = MAX_n;
+                    for(int j=0; j<k; j++){
+                        dist = pow(vectorDifference(histogram->featureVector[i],centroids->featureVector[j]),2);
+                        if (dist < min){
+                            min = dist;
+                            //clusters[i]=j;
+                            for(int s=0; s<histogram->featureVector[0]->size; s++) //Atribui o elemento mais próximo da média como centróide
+                                centroids->featureVector[j]->features[s] = histogram->featureVector[i]->features[s];
+                        }
+                    }
+                }
 			} else {
 				while(true) {
 					int randomIndex = rand() % nFeaturesVectors;

@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 		destroyImage(&currentImage);
 		destroyFeatureMatrix(&featuresCurrentImage);
     }
-	writeFeatureMatrix(matrix, filenameMatriz, nFiles);
+	writeFeatureMatrix(matrix, filenameClassifier, nFiles);
 	
 
 	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations);
