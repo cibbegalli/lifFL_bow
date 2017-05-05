@@ -1,6 +1,6 @@
 #include "FL.h"
+#include "constants.h"
 
-/*
 char* mysubstr(char *str, int position, int length) {
 	char *result = (char*)calloc(length+1, sizeof(char)); 
 	int index = 0;
@@ -29,7 +29,7 @@ int imageLabel(char *filename) {
 
 	return prev_l;
 }
-*/
+
 
 void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
 	for(int i=0; i<nFeatures; i++) {
@@ -41,21 +41,30 @@ void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
 	}
 }
 
-int main(int argc, char **argv) {
-	
-    if (argc != 8){
-        printf("Usage:\n<directory path [such as ../data/]>\n<dictionary file path [such as ../files/dic.txt]>\n<patchSize [such as 8]>\n<binSize [such as 64]>\n<classifier file path [such as ../files/classifier.txt]>\nn class\nmaxIterations");
-        exit(-1);
-    }
+void writeFeatureVector(FeatureVector* vec, char *filename){
+    FILE *fp = fopen(filename,"w");
+        for (int j = 0; j < vec->size; ++j) {
+            fprintf(fp,"%f",vec->features[j]);
+            fprintf(fp,"\n");
+        }
+}
 
-    DirectoryManager* directoryManager = loadDirectory(argv[1], 1);
+
+int main(int argc, char **argv) {
+	/*
+    if (argc != 8){
+        printf("Usage:\n<directory path [such as ../data/]>\n<dictionary file path [such as ../files/dic.txt]>\n<patchSize [such as 8]>\n<binSize [such as 64]>\n<classifier file path [such as ../files/classifier.txt]>\nn class\nmaxIterations\n");
+        exit(-1);
+    }*/
+
+    DirectoryManager* directoryManager = loadDirectory(TRAIN_DATA, 1);
 	int nFiles = (int)directoryManager->nfiles;
-	char *filename = argv[2];
-	int patchSize = atoi(argv[3]);
-	int binSize = atoi(argv[4]);
-	char *filenameClassifier = argv[5];
-	int k = atoi(argv[6]);
-	int maxIterations = atoi(argv[7]);
+	char *filename = DICTIONARY_FILE;
+	int patchSize = PATCH_SIZE;
+	int binSize = BIN_SIZE;
+	char *filenameClassifier = TRAIN_FILE;
+	int k = N_CLASS;
+	int maxIterations = MAX_ITERATIONS;
 
 	Image* firstImage = readImage(directoryManager->files[0]->path);
     int patchX_axis = firstImage->nx/patchSize;
@@ -117,7 +126,8 @@ int main(int argc, char **argv) {
 	float dist, minDist;
 	int indexWord;
 
-	//int *labels = (int*) malloc(sizeof(int)*nFiles);
+	int *labels = (int*) malloc(sizeof(int)*nFiles);
+    int *id_centroids = (int*)malloc(sizeof(int)*k);
 	FeatureMatrix *matrix = createFeatureMatrix(nFiles);
 
     for (int i = 0; i < nFiles; ++i) {
@@ -146,27 +156,30 @@ int main(int argc, char **argv) {
 			histogram->features[indexWord]++;
 		}
 
-		//labels[i] = imageLabel(directoryManager->files[i]->path);
+		labels[i] = imageLabel(directoryManager->files[i]->path);
+        //printf("%d ", labels[i]);
 		matrix->featureVector[i] = copyFeatureVector(histogram);
 		
 		destroyFeatureVector(&histogram);
 		destroyImage(&currentImage);
 		destroyFeatureMatrix(&featuresCurrentImage);
     }
-	writeFeatureMatrix(matrix, filenameClassifier, nFiles);
-	
 
-	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations);
+	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations, id_centroids);
+    FeatureVector* label_centroids = createFeatureVector(k);
+    for(int i=0; i<k; i++){
+        label_centroids->features[i]=labels[id_centroids[i]];
+    }
 
-	writeFeatureMatrix(classifier, filenameClassifier, nFiles);
+	writeFeatureMatrix(classifier, filenameClassifier, k);
 	printFeatureMatrix(classifier, k);
-	
+    writeFeatureVector(label_centroids,LABEL_FILE);
 	
 	destroyFeatureMatrix(&matrix);
-    destroyDirectoryManager(&directoryManager);
 	destroyFeatureMatrix(&dictionary);
 	destroyFeatureMatrix(&classifier);
-
+    destroyDirectoryManager(&directoryManager);
+    
     return 0;
 }
 
