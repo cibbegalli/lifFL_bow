@@ -5,14 +5,14 @@ bool isBreakDifference(FeatureMatrix* old_centroids, FeatureMatrix* centroids, i
 	for(int i=0; i<k; i++) {
 		diff += vectorDifference(old_centroids->featureVector[i], centroids->featureVector[i]);
 	}
-	float minDiff = 0.001*k*centroids->featureVector[0]->size;
-	if(diff < (minDiff + 0.0005))
+	float minDiff = 0.0000000001*k*centroids->featureVector[0]->size;
+	if(diff < (minDiff + 0.0000000005))
 		return true;
 	return false;
 }
 
 //Function to choose the k words to a histogram
-FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVectors, int maxIterations){
+FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVectors, int maxIterations, int* id_centroids){
 	FeatureMatrix* centroids = createFeatureMatrix(k);
 	FeatureMatrix* old_centroids = createFeatureMatrix(k);
 	for(int i=0; i<k; i++) {	
@@ -39,6 +39,7 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 				if(repeat == false) {
 					isUsed[randomIndex] = true;
 					centroids->featureVector[i] = copyFeatureVector(histogram->featureVector[randomIndex]);
+                    id_centroids[i] = randomIndex; // Armazena id inicial de cada centroid (saber a qual classe ele pertence) 
 					break;
 				}
 			}
@@ -99,33 +100,34 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 				for(int j=0; j<histogram->featureVector[0]->size; j++)
 					centroids->featureVector[i]->features[j] = centroids->featureVector[i]->features[j]/elements[i]; //Tira ponto médio em cada cluster.
     
-                for(int i=0; i<nFeaturesVectors; i++){ //Para cada cluster, calcular o elemento mais próximo da média
+                //Para cada cluster, calcular o elemento mais próximo da média
                     dist = 0;
                     min = MAX_n;
-                    for(int j=0; j<k; j++){
-                        dist = pow(vectorDifference(histogram->featureVector[i],centroids->featureVector[j]),2);
+                    for(int j=0; j<nFeaturesVectors; j++){
+                        dist = pow(vectorDifference(histogram->featureVector[j],centroids->featureVector[i]),2);
                         if (dist < min){
                             min = dist;
                             //clusters[i]=j;
-                            for(int s=0; s<histogram->featureVector[0]->size; s++) //Atribui o elemento mais próximo da média como centróide
-                                centroids->featureVector[j]->features[s] = histogram->featureVector[i]->features[s];
+                            id_centroids[i] = j;
                         }
                     }
-                }
+                    for(int s=0; s<histogram->featureVector[0]->size; s++) //Atribui o elemento mais próximo da média como centróide
+                        centroids->featureVector[i]->features[s] = histogram->featureVector[id_centroids[i]]->features[s];
 			} else {
 				while(true) {
 					int randomIndex = rand() % nFeaturesVectors;
 					if(isUsed[randomIndex] == false) {
 						isUsed[randomIndex] = true;
 						centroids->featureVector[i] = copyFeatureVector(histogram->featureVector[randomIndex]);
+                        id_centroids[i] = randomIndex;
 						break;
 					}
 				}
 			}
 			
 		}
-		if(isBreakDifference(old_centroids, centroids, k))
-			break;
+		//if(isBreakDifference(old_centroids, centroids, k))
+			//break;
 	}
 	
 	printf("break kmeans in iteration %d\n", iter);

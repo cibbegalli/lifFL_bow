@@ -24,7 +24,7 @@ FeatureMatrix* computeFeatureVectors(DirectoryManager* directoryManager, int pat
             for (int x = 0; x <= currentImage->nx-patchSize; x += patchSize) {
                 Image* patch = extractSubImage(currentImage,x,y,patchSize,patchSize,true);
 				//char patchName[50];
-				//sprintf(patchName,"../data/patchs/patch%d.ppm", k);
+				//sprintf(patchName,"../data/patchs/patch_%d_%d.ppm", k, fileIndex); //Guarda id geral i id arquivo
 	            //writeImage(patch, patchName);
                 featureMatrix->featureVector[k] = computeHistogramForFeatureVector(patch,binSize,true);
 				//Histogram *histogram = computeHistogram(patch, binSize, true);
@@ -37,6 +37,7 @@ FeatureMatrix* computeFeatureVectors(DirectoryManager* directoryManager, int pat
     }
     return featureMatrix;
 }
+
 
 FeatureMatrix* computeFeatureVectors(Image* imagePack, int patchSize, int binSize){
     Image* currentSlice;

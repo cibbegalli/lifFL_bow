@@ -1,6 +1,7 @@
 #ifndef _FL_H_
 #define _FL_H_
 
+#include <unistd.h>
 #include "common.h"
 #include "file.h"
 #include "adjacencyRelation.h"
