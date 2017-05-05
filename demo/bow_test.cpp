@@ -30,6 +30,13 @@ int imageLabel(char *filename) {
 	return prev_l;
 }
 
+void writeFeatureVector(FeatureVector* vec, char *filename){
+    FILE *fp = fopen(filename,"w");
+    for (int j = 0; j < vec->size; ++j) {
+        fprintf(fp,"%f",vec->features[j]);
+        fprintf(fp,"\n");
+    }
+}
 
 void printFeatureMatrix(FeatureMatrix *m, int nFeatures) {
 	for(int i=0; i<nFeatures; i++) {
@@ -48,7 +55,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }*/
     
-    DirectoryManager* directoryManager = loadDirectory(TEST_DATA, 1);
+    DirectoryManager* directoryManager = loadFilesFromDirBySuffix(TEST_DATA, ".ppm");
     int nFiles = (int)directoryManager->nfiles;
     int patchSize = PATCH_SIZE;
     int binSize = BIN_SIZE;
@@ -88,7 +95,7 @@ int main(int argc, char **argv) {
     
     FeatureMatrix *dictionary = createFeatureMatrix(dictionarySize);
     // Lendo arquivo para salvar dicionario em estrutura FeatureMatrix
-    file = fopen(filename , "r");
+    file = fopen(filenameDic , "r");
     if (file) {
         
         for(int i=0; i<dictionarySize; i++) {
@@ -96,7 +103,7 @@ int main(int argc, char **argv) {
         }
         int indexLine = 0;
         int indexFeature = 0;
-        while (fscanf(file, "%s", str)!=EOF) {
+        while (fscanf(file, "%s ", str)!=EOF) {
             dictionary->featureVector[indexLine]->features[indexFeature] = atof(str);
             if(indexFeature == (nFeatures-1)) {
                 indexLine++;		
@@ -170,12 +177,15 @@ int main(int argc, char **argv) {
         for(int j=0; j<dictionarySize; j++) {
             histogram->features[j] = 0;
         }
+        
+        //printFeatureMatrix(featuresCurrentImage, numberPatchsPerImage);
+        
         //Para cada patch da imagem, identifica palavra visual mais próxima
         for(int j=0; j<numberPatchsPerImage; j++) {
             minDist = MAX_n;
             indexWord = -1;
             for(int l=0; l<dictionarySize; l++) {
-                dist = vectorDistance(featuresCurrentImage->featureVector[j],dictionary->featureVector[l]);
+                dist = vectorDifference(featuresCurrentImage->featureVector[j],dictionary->featureVector[l]);
                 if(dist < minDist) {
                     minDist = dist;
                     indexWord = l;
@@ -184,11 +194,12 @@ int main(int argc, char **argv) {
             
             histogram->features[indexWord]++;
         }
-
+    
+        
+        minDist = MAX_n;
+        indexWord = -1;
         for(int j=0; j<classifierSize; j++) {
-            minDist = MAX_n;
-            indexWord = -1;
-            dist = vectorDistance(histogram,classifier->featureVector[j]);
+            dist = vectorDistance(classifier->featureVector[j], histogram);
             if(dist < minDist) {
                 minDist = dist;
                 indexWord = j;

@@ -84,13 +84,13 @@ int main(int argc, char **argv) {
         exit(-1);
     }*/
 
-    DirectoryManager* directoryManager = loadDirectory(DICTIONARY_DATA, 1);
+    DirectoryManager* directoryManager = loadFilesFromDirBySuffix(DICTIONARY_DATA, ".ppm");
 	int nFiles = (int)directoryManager->nfiles;
 	int patchSize = PATCH_SIZE;
 	int binSize = BIN_SIZE;
 	int maxIterations = MAX_ITERATIONS;
 	char *filename = DICTIONARY_FILE;
-    int *id_centroids;
+    int *id_centroids, *clusters;
     char **label;
 
 	Image* firstImage = readImage(directoryManager->files[0]->path);
@@ -111,15 +111,17 @@ int main(int argc, char **argv) {
     // salva no nome do arquivo: qual é o id geral e a qual imagem pertence
     
 	printf("Features\n");
-	printFeatureMatrixWithName(features, numberPatchs, numberPatchsPerImage, directoryManager);
+	//printFeatureMatrixWithName(features, numberPatchs, numberPatchsPerImage, directoryManager);
 
-	int k = ceil(numberPatchs*0.1);	
+	int k = ceil(numberPatchs*0.1);
+    //int k = ceil(10);
     id_centroids = (int*)malloc(sizeof(int)*k); //Salva o id original de cada histograma para cada centroide
+    clusters = (int*)malloc(sizeof(int)*numberPatchs); //Salva o id original de cada histograma para cada centroide
     
-	FeatureMatrix *dictionary = computekMeans(features, k, numberPatchs, maxIterations, id_centroids);
+	FeatureMatrix *dictionary = computekMeans(features, k, numberPatchs, maxIterations, id_centroids, clusters);
     //label = givesLabel(dictionary->nFeatures, id_centroids, directoryManager, numberPatchsPerImage); // atribui label do arquivo para cada centroide
-	printf("Dictionary\n");	
-	//printFeatureMatrix(dictionary, k);
+	//printf("Dictionary\n");
+	printFeatureMatrix(dictionary, k);
     printCentroids(dictionary, k, numberPatchsPerImage, directoryManager, id_centroids); //pode ser otimizada pela função gives label
     
     destroyDirectoryManager(&directoryManager);

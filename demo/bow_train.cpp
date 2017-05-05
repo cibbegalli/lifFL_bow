@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }*/
 
-    DirectoryManager* directoryManager = loadDirectory(TRAIN_DATA, 1);
+    DirectoryManager* directoryManager = loadFilesFromDirBySuffix(TRAIN_DATA, ".ppm");
 	int nFiles = (int)directoryManager->nfiles;
 	char *filename = DICTIONARY_FILE;
 	int patchSize = PATCH_SIZE;
@@ -128,6 +128,7 @@ int main(int argc, char **argv) {
 
 	int *labels = (int*) malloc(sizeof(int)*nFiles);
     int *id_centroids = (int*)malloc(sizeof(int)*k);
+    int *clusters = (int*)malloc(sizeof(int)*nFiles);
 	FeatureMatrix *matrix = createFeatureMatrix(nFiles);
 
     for (int i = 0; i < nFiles; ++i) {
@@ -165,7 +166,7 @@ int main(int argc, char **argv) {
 		destroyFeatureMatrix(&featuresCurrentImage);
     }
 
-	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations, id_centroids);
+	FeatureMatrix* classifier = computekMeans(matrix, k, nFiles, maxIterations, id_centroids, clusters);
     FeatureVector* label_centroids = createFeatureVector(k);
     for(int i=0; i<k; i++){
         label_centroids->features[i]=labels[id_centroids[i]];

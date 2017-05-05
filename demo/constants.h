@@ -9,10 +9,10 @@
 #define TRAIN_DATA "../data/train/"
 #define TEST_DATA "../data/test/"
 
-#define BIN_SIZE 128
-#define PATCH_SIZE 32
+#define BIN_SIZE 64
+#define PATCH_SIZE 8
 #define MAX_ITERATIONS 1000
-#define N_CLASS 3
+#define N_CLASS 10
 
 #define DICTIONARY_FILE "../files/dictionary.txt"
 #define TRAIN_FILE "../files/classifier.txt"

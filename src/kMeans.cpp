@@ -12,7 +12,8 @@ bool isBreakDifference(FeatureMatrix* old_centroids, FeatureMatrix* centroids, i
 }
 
 //Function to choose the k words to a histogram
-FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVectors, int maxIterations, int* id_centroids){
+FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVectors, int maxIterations, int* id_centroids, int* clusters){
+    srand(time(NULL));
 	FeatureMatrix* centroids = createFeatureMatrix(k);
 	FeatureMatrix* old_centroids = createFeatureMatrix(k);
 	for(int i=0; i<k; i++) {	
@@ -45,11 +46,15 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 			}
 		}
 	}
+    
+    printf("\nCentroids iniciais: ");
+    for(int i=0; i<k; i++){
+        printf("%d ", id_centroids[i]);
+    }
 
 	int dist, min;
 	
 	int *elements = (int*) malloc(sizeof(int)*k);
-	int *clusters = (int*) malloc(sizeof(int)*nFeaturesVectors);
 	for(int i=0; i<nFeaturesVectors; i++) {
 		clusters[i] = -1;
 	}
@@ -65,12 +70,21 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 			min = MAX_n;
 			for(int j=0; j<k; j++){		
 				dist = pow(vectorDifference(histogram->featureVector[i],centroids->featureVector[j]),2);
-				if (dist < min){
+                if (dist < min){
 					min = dist;
 					clusters[i]=j;
 				}
 			}
 		}
+        
+        printf("\n\nIter %d :",iter);
+        for(int j=0; j<k; j++){
+            printf("\nCluster %d :\n",j);
+            for(int i=0; i<nFeaturesVectors; i++){
+                    if(clusters[i]==j)
+                    printf("%d ", i);
+            }
+        }
 
 		//Old_centroids = centroids; centroids e elements zerados
 		for(int i=0; i<k; i++){
@@ -99,37 +113,42 @@ FeatureMatrix* computekMeans(FeatureMatrix* histogram, int k, int nFeaturesVecto
 			if(elements[i] != 0) {
 				for(int j=0; j<histogram->featureVector[0]->size; j++)
 					centroids->featureVector[i]->features[j] = centroids->featureVector[i]->features[j]/elements[i]; //Tira ponto médio em cada cluster.
-    
+    /*
                 //Para cada cluster, calcular o elemento mais próximo da média
                     dist = 0;
                     min = MAX_n;
                     for(int j=0; j<nFeaturesVectors; j++){
-                        dist = pow(vectorDifference(histogram->featureVector[j],centroids->featureVector[i]),2);
+                        //dist = pow(vectorDifference(histogram->featureVector[j],centroids->featureVector[i]),2);
+                        dist = vectorDistance(histogram->featureVector[j],centroids->featureVector[i]);
                         if (dist < min){
                             min = dist;
-                            //clusters[i]=j;
-                            id_centroids[i] = j;
+                            clusters[i]=j;
+                            //id_centroids[i] = j;
                         }
                     }
                     for(int s=0; s<histogram->featureVector[0]->size; s++) //Atribui o elemento mais próximo da média como centróide
-                        centroids->featureVector[i]->features[s] = histogram->featureVector[id_centroids[i]]->features[s];
+                        centroids->featureVector[i]->features[s] = histogram->featureVector[id_centroids[i]]->features[s];*/
 			} else {
 				while(true) {
 					int randomIndex = rand() % nFeaturesVectors;
 					if(isUsed[randomIndex] == false) {
 						isUsed[randomIndex] = true;
 						centroids->featureVector[i] = copyFeatureVector(histogram->featureVector[randomIndex]);
-                        id_centroids[i] = randomIndex;
+                        //id_centroids[i] = randomIndex;
 						break;
 					}
 				}
 			}
-			
 		}
-		//if(isBreakDifference(old_centroids, centroids, k))
-			//break;
+        
+		if(isBreakDifference(old_centroids, centroids, k))
+			break;
 	}
-	
+    /*
+    printf("\nCentroids finais: ");
+    for(int i=0; i<k; i++){
+        printf("%d ", id_centroids[i]);
+    }*/
 	printf("break kmeans in iteration %d\n", iter);
 	
 	free(isUsed);
